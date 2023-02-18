@@ -17,13 +17,9 @@ builds:
       -X github.com/mtrqq/goreleaser-test/lib.Date={{.Date}}
 
 archives:
-  - format: tar.gz
+  - format: binary
     # this name template makes the OS and Arch compatible with the results of uname.
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
-    # use zip for windows archives
-    format_overrides:
-    - goos: windows
-      format: zip
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -34,6 +30,20 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+
+dockers:
+  - id: goexec-docker
+    image_templates:
+      - "mtrqq/goexec:{{ .Tag }}"
+      - "mtrqq/goexec:v{{ .Major }}"
+    goos: linux
+    goarch: amd64
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
 
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
