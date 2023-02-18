@@ -3,8 +3,13 @@ FROM node:19-buster as builder
 # executed from frontend folder
 COPY frontend /usr/app
 
+ARG VERSION
+
 WORKDIR /usr/app
-RUN npm run build
+
+RUN \
+    npm version --no-git-tag-version ${VERSION} && \
+    npm run build
 
 FROM scratch
 

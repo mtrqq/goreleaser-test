@@ -26,7 +26,7 @@ builds:
     binary: bundle
     hooks:
       post:
-        - rm {{ .Path }}
+        - powershell -c "rm {{ .Path }}"
         - cmd: docker buildx build ../.. -f ../../hack/Dockerfile --output type=local,dest=./bundle
           dir: "{{ dir .Path }}"
 
@@ -41,11 +41,13 @@ archives:
     format: tar.gz
     builds:
       - frontend
+    strip_parent_binary_folder: true
+    wrap_in_directory: true
     # this name template makes the OS and Arch compatible with the results of uname.
     name_template: "{{ .ProjectName }}-frontend-bundle"
 
 checksum:
-  name_template: 'checksums.txt'
+  disable: true
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 changelog:
