@@ -2,11 +2,11 @@
 # Make sure to check the documentation at https://goreleaser.com
 project_name: goexec
 builds:
-  - env:
+  - id: backend
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
-      - windows
       - darwin
     dir: .
     main: ./cmd
@@ -16,10 +16,34 @@ builds:
       -X github.com/mtrqq/goreleaser-test/lib.Commit={{.Commit}}
       -X github.com/mtrqq/goreleaser-test/lib.Date={{.Date}}
 
+  # inspired by - https://jondot.medium.com/shipping-rust-binaries-with-goreleaser-d5aa42a46be0
+  - id: frontend
+    main: hack/dummy.go
+    goos:
+      - linux
+    goarch:
+      - amd64
+    binary: bundle
+    hooks:
+      post:
+        - rm {{ .Path }}
+        - cmd: docker buildx build ../.. -f ../../hack/Dockerfile --output type=local,dest=./bundle
+          dir: "{{ dir .Path }}"
+
 archives:
-  - format: binary
+  - id: backend-archive
+    format: binary
+    builds:
+      - backend
     # this name template makes the OS and Arch compatible with the results of uname.
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
+  - id: frontend-archive
+    format: tar.gz
+    builds:
+      - frontend
+    # this name template makes the OS and Arch compatible with the results of uname.
+    name_template: "{{ .ProjectName }}-frontend-bundle"
+
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -32,10 +56,29 @@ changelog:
       - '^test:'
 
 dockers:
-  - id: goexec-docker
+  - id: backend-docker
+    ids:
+      - backend
     image_templates:
       - "mtrqq/goexec:{{ .Tag }}"
       - "mtrqq/goexec:v{{ .Major }}"
+    goos: linux
+    goarch: amd64
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+    use: buildx
+
+  - id: frontend-docker
+    ids:
+      - frontend
+    dockerfile: frontend/Dockerfile
+    image_templates:
+      - "mtrqq/goexec-frontend:{{ .Tag }}"
+      - "mtrqq/goexec-frontend:v{{ .Major }}"
     goos: linux
     goarch: amd64
     build_flag_templates:
