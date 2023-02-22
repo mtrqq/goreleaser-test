@@ -1,5 +1,5 @@
 repos:
-- repo: git://github.com/pre-commit/pre-commit-hooks
+- repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v2.1.0
   hooks:
     - id: check-added-large-files
@@ -12,8 +12,6 @@ repos:
     name: conventional commit messages
     language: pygrep
     entry: '^(chore|test|feat|fix|build|docs|refactor)!?: ((?!.*(ing))(?!.*(ed))).*$'
-  args:
-  - --multiline
-  - --negate # fails if the entry is NOT matched
-  stages:
-  - commit-msg
+    args:
+    - --multiline
+    - --negate # fails if the entry is NOT matched
